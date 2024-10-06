@@ -4,8 +4,8 @@ import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-# Load model and vectorizer
-model_directory = r'D:\SEM5\PROJECT-1\new\joblib-hugging face'
+# Load model and vectorizer from the current directory
+model_directory = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(model_directory, 'sentiment_model.joblib')
 vectorizer_path = os.path.join(model_directory, 'vectorizer.joblib')
 
