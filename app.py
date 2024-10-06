@@ -1,9 +1,15 @@
 import joblib
 import re
 import os
+import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load model and vectorizer from the current directory
 try:
@@ -22,14 +28,23 @@ try:
     if not hasattr(model, "predict") or not isinstance(vectorizer, TfidfVectorizer):
         raise ValueError("Invalid model or vectorizer loaded")
 
-    print("Model and vectorizer loaded successfully.")
+    logger.info("Model and vectorizer loaded successfully.")
 
 except Exception as e:
-    print(f"Error loading model or vectorizer: {e}")
+    logger.error(f"Error loading model or vectorizer: {e}")
     raise
 
 # Create a FastAPI instance
 app = FastAPI()
+
+# CORS configuration to allow frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust this to your frontend URL for security
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Define the input data structure
 class InputData(BaseModel):
@@ -54,8 +69,8 @@ async def predict(data: InputData):
         prediction = model.predict(input_vectorized)
 
         # Debugging output
-        print(f"Raw Prediction: {prediction[0]}")
-        print(f"Model Classes: {model.classes_}")
+        logger.info(f"Raw Prediction: {prediction[0]}")
+        logger.info(f"Model Classes: {model.classes_}")
 
         # Convert prediction to human-readable format
         sentiment = prediction[0]  # This should now be a string like 'Favorable', 'Neutral', or 'Not Favorable'
@@ -72,7 +87,7 @@ async def predict(data: InputData):
         return {'sentiment': result}
     
     except Exception as e:
-        print(f"Error during prediction: {e}")
+        logger.error(f"Error during prediction: {e}")
         return {'sentiment': 'error', 'details': str(e)}
 
 if __name__ == '__main__':
